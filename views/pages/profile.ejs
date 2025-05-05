@@ -1,0 +1,102 @@
+<div class="max-w-4xl mx-auto">
+  <div class="text-center mb-8">
+    <h1 class="text-3xl font-bold mb-2">Min Profil</h1>
+    <p class="text-gray-600">Administrer kontoen din og se dine quizresultater</p>
+  </div>
+  
+  <div class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+    <div class="p-6">
+      <h2 class="text-xl font-semibold mb-4">Brukerinformasjon</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <p class="text-gray-600">Brukernavn</p>
+          <p class="font-medium"><%= user.username %></p>
+        </div>
+        
+        <div>
+          <p class="text-gray-600">E-post</p>
+          <p class="font-medium"><%= user.email %></p>
+        </div>
+        
+        <div>
+          <p class="text-gray-600">Brukertype</p>
+          <p class="font-medium"><%= user.role === 'admin' ? 'Administrator' : 'Bruker' %></p>
+        </div>
+        
+        <div>
+          <p class="text-gray-600">Registrert</p>
+          <p class="font-medium"><%= new Date(user.createdAt).toLocaleDateString('no-NO') %></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+      <div class="p-6">
+        <h2 class="text-xl font-semibold mb-4">Mine quizzer</h2>
+        
+        <% if (user.quizzes && user.quizzes.length > 0) { %>
+          <p class="text-gray-600 mb-4">Du har laget <%= user.quizzes.length %> quizzer.</p>
+          <a href="/quiz/my-quizzes" class="inline-block bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 transition">
+            Se mine quizzer
+          </a>
+        <% } else { %>
+          <p class="text-gray-600 mb-4">Du har ikke laget noen quizzer ennå.</p>
+          <a href="/quiz/create" class="inline-block bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 transition">
+            Lag din første quiz
+          </a>
+        <% } %>
+      </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+      <div class="p-6">
+        <h2 class="text-xl font-semibold mb-4">Quizresultater</h2>
+        
+        <% if (user.completedQuizzes && user.completedQuizzes.length > 0) { %>
+          <p class="text-gray-600 mb-4">Du har fullført <%= user.completedQuizzes.length %> quizzer.</p>
+          <div class="space-y-2">
+            <% user.completedQuizzes.slice(0, 3).forEach(result => { %>
+              <div class="p-3 bg-gray-50 rounded-md">
+                <div class="flex justify-between items-center">
+                  <span class="font-medium"><%= result.quiz.title || 'Quiz' %></span>
+                  <span class="px-2 py-1 rounded-full text-xs font-medium <%= result.score >= 80 ? 'bg-green-100 text-green-800' : result.score >= 60 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800' %>">
+                    <%= result.score %>%
+                  </span>
+                </div>
+                <p class="text-xs text-gray-500">Fullført: <%= new Date(result.completedAt).toLocaleDateString('no-NO') %></p>
+              </div>
+            <% }) %>
+            
+            <% if (user.completedQuizzes.length > 3) { %>
+              <p class="text-center text-sm text-gray-600 mt-2">+ <%= user.completedQuizzes.length - 3 %> flere resultater</p>
+            <% } %>
+          </div>
+        <% } else { %>
+          <p class="text-gray-600 mb-4">Du har ikke fullført noen quizzer ennå.</p>
+          <a href="/quiz" class="inline-block bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 transition">
+            Utforsk quizzer
+          </a>
+        <% } %>
+      </div>
+    </div>
+  </div>
+  
+  <div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="p-6">
+      <h2 class="text-xl font-semibold mb-4">Kontoinnstillinger</h2>
+      
+      <div class="flex space-x-4">
+        <a href="#" class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition">
+          Endre passord
+        </a>
+        
+        <a href="/auth/logout" class="px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition">
+          Logg ut
+        </a>
+      </div>
+    </div>
+  </div>
+</div> 

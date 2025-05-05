@@ -7,7 +7,9 @@ const { isAuthenticated } = require('../middleware/auth.middleware');
 router.get('/', (req, res) => {
   res.render('pages/quizzes', { 
     title: 'IT-Quiz - Alle quizzer',
-    user: req.session.user || null
+    user: req.session.user || null,
+    filter: {},
+    quizzes: []
   });
 });
 

@@ -1,0 +1,238 @@
+<div class="max-w-4xl mx-auto">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold mb-2"><%= quiz.title %></h1>
+    <p class="text-gray-600 mb-4"><%= quiz.description %></p>
+    
+    <div class="flex flex-wrap gap-2 mb-4">
+      <span class="px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm">
+        <%= {
+          'programutvikling': 'Programutvikling',
+          'drift': 'Drift og infrastruktur',
+          'nettverk': 'Nettverk og sikkerhet',
+          'database': 'Database',
+          'annet': 'Annet'
+        }[quiz.category] || 'Ukjent kategori' %>
+      </span>
+      
+      <span class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm">
+        <%= {
+          'enkel': 'Enkel',
+          'middels': 'Middels',
+          'vanskelig': 'Vanskelig'
+        }[quiz.difficulty] || 'Ukjent vanskelighetsgrad' %>
+      </span>
+      
+      <span class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <%= quiz.timeLimit %> minutter
+      </span>
+      
+      <% if (quiz.tags && quiz.tags.length > 0) { %>
+        <% quiz.tags.forEach(tag => { %>
+          <span class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm">
+            <%= tag %>
+          </span>
+        <% }) %>
+      <% } %>
+    </div>
+    
+    <div class="flex items-center text-gray-600 text-sm">
+      <span>Laget av <%= quiz.author.username %></span>
+      <span class="mx-2">•</span>
+      <span><%= quiz.plays %> gjennomføringer</span>
+      
+      <% if (quiz.plays > 0) { %>
+        <span class="mx-2">•</span>
+        <span>Gjennomsnittlig score: <%= quiz.averageScore.toFixed(1) %>%</span>
+      <% } %>
+    </div>
+  </div>
+  
+  <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+    <div id="quiz-timer" class="flex justify-between items-center mb-4 pb-4 border-b">
+      <div class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Gjenværende tid:</span>
+        <span id="timer-display" class="ml-2 font-semibold"><%=quiz.timeLimit%>:00</span>
+      </div>
+      
+      <div class="flex items-center">
+        <span>Spørsmål:</span>
+        <span id="question-counter" class="ml-2 font-semibold">1/<%= quiz.questions.length %></span>
+      </div>
+    </div>
+    
+    <form id="quiz-form" action="/quiz/submit/<%= quiz._id %>" method="POST">
+      <div id="questions-container">
+        <% quiz.questions.forEach((question, index) => { %>
+          <div class="quiz-question <%= index > 0 ? 'hidden' : '' %>" data-question-index="<%= index %>">
+            <h2 class="text-xl font-semibold mb-4">
+              <%= index + 1 %>. <%= question.questionText %>
+              <% if (question.points > 1) { %>
+                <span class="text-sm font-normal text-gray-600 ml-2">(<%= question.points %> poeng)</span>
+              <% } %>
+            </h2>
+            
+            <div class="mb-6">
+              <% if (question.questionType === 'multiple-choice') { %>
+                <div class="space-y-3">
+                  <% question.options.forEach((option, optionIndex) => { %>
+                    <label class="flex items-center p-3 border rounded-md hover:bg-gray-50 transition cursor-pointer">
+                      <input type="radio" name="answers[<%= index %>]" value="<%= optionIndex %>" class="mr-3 h-4 w-4 text-primary-600 focus:ring-primary-500">
+                      <span><%= option.text %></span>
+                    </label>
+                  <% }) %>
+                </div>
+              
+              <% } else if (question.questionType === 'true-false') { %>
+                <div class="space-y-3">
+                  <% question.options.forEach((option, optionIndex) => { %>
+                    <label class="flex items-center p-3 border rounded-md hover:bg-gray-50 transition cursor-pointer">
+                      <input type="radio" name="answers[<%= index %>]" value="<%= optionIndex %>" class="mr-3 h-4 w-4 text-primary-600 focus:ring-primary-500">
+                      <span><%= option.text %></span>
+                    </label>
+                  <% }) %>
+                </div>
+              
+              <% } else if (question.questionType === 'short-answer') { %>
+                <input type="text" name="answers[<%= index %>]" class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Ditt svar">
+              
+              <% } else if (question.questionType === 'matching') { %>
+                <div class="matching-question space-y-4">
+                  <!-- Left side items (fixed) -->
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <% question.matchingPairs.forEach((pair, pairIndex) => { %>
+                        <div class="mb-3 p-3 bg-gray-100 rounded-md">
+                          <%= pair.left %>
+                        </div>
+                      <% }) %>
+                    </div>
+                    
+                    <!-- Right side items (to be matched) -->
+                    <div>
+                      <% question.matchingPairs.forEach((pair, pairIndex) => { %>
+                        <div class="mb-3">
+                          <select name="answers[<%= index %>][<%= pairIndex %>]" class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            <option value="">-- Velg riktig match --</option>
+                            <% question.matchingPairs.forEach((innerPair, innerIndex) => { %>
+                              <option value="<%= innerIndex %>"><%= innerPair.right %></option>
+                            <% }) %>
+                          </select>
+                        </div>
+                      <% }) %>
+                    </div>
+                  </div>
+                </div>
+              <% } %>
+            </div>
+            
+            <div class="flex justify-between mt-6">
+              <button 
+                type="button" 
+                class="prev-question bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 transition <%= index === 0 ? 'invisible' : '' %>"
+              >
+                Forrige spørsmål
+              </button>
+              
+              <% if (index === quiz.questions.length - 1) { %>
+                <button 
+                  type="submit" 
+                  class="submit-quiz bg-primary-600 text-white px-6 py-2 rounded-md hover:bg-primary-700 transition"
+                >
+                  Fullfør quiz
+                </button>
+              <% } else { %>
+                <button 
+                  type="button" 
+                  class="next-question bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 transition"
+                >
+                  Neste spørsmål
+                </button>
+              <% } %>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </form>
+  </div>
+  
+  <div class="mt-8 text-center">
+    <a href="/quiz" class="text-primary-600 hover:text-primary-800 inline-flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+      Tilbake til alle quizzer
+    </a>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('quiz-form');
+    const questionContainer = document.getElementById('questions-container');
+    const questions = questionContainer.querySelectorAll('.quiz-question');
+    const prevButtons = questionContainer.querySelectorAll('.prev-question');
+    const nextButtons = questionContainer.querySelectorAll('.next-question');
+    const questionCounter = document.getElementById('question-counter');
+    const timerDisplay = document.getElementById('timer-display');
+    
+    let currentQuestionIndex = 0;
+    let timeLeft = <%= quiz.timeLimit %> * 60; // seconds
+    
+    // Set up timer
+    const timer = setInterval(function() {
+      timeLeft--;
+      
+      const minutes = Math.floor(timeLeft / 60);
+      const seconds = timeLeft % 60;
+      
+      timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        form.submit();
+      }
+    }, 1000);
+    
+    // Navigation between questions
+    function showQuestion(index) {
+      questions.forEach((q, i) => {
+        if (i === index) {
+          q.classList.remove('hidden');
+        } else {
+          q.classList.add('hidden');
+        }
+      });
+      
+      currentQuestionIndex = index;
+      questionCounter.textContent = `${index + 1}/${questions.length}`;
+    }
+    
+    // Event listeners for navigation buttons
+    prevButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        if (currentQuestionIndex > 0) {
+          showQuestion(currentQuestionIndex - 1);
+        }
+      });
+    });
+    
+    nextButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        if (currentQuestionIndex < questions.length - 1) {
+          showQuestion(currentQuestionIndex + 1);
+        }
+      });
+    });
+    
+    // Submit quiz when form is submitted
+    form.addEventListener('submit', function() {
+      clearInterval(timer);
+    });
+  });
+</script> 

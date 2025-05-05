@@ -1,0 +1,527 @@
+<div class="max-w-5xl mx-auto">
+  <div class="text-center mb-8">
+    <h1 class="text-3xl font-bold mb-2">Lag ny quiz</h1>
+    <p class="text-gray-600">Lag din egen IT-quiz og del den med andre brukere!</p>
+  </div>
+  
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+      <%= error %>
+    </div>
+  <% } %>
+  
+  <div class="bg-white p-6 rounded-lg shadow-md">
+    <form id="quiz-form" action="/quiz/create" method="POST" class="space-y-6">
+      <!-- Quiz basic info -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label for="title" class="block font-medium text-gray-700 mb-2">Tittel <span class="text-red-500">*</span></label>
+          <input 
+            type="text" 
+            id="title" 
+            name="title" 
+            class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            required
+          >
+        </div>
+        
+        <div>
+          <label for="category" class="block font-medium text-gray-700 mb-2">Kategori <span class="text-red-500">*</span></label>
+          <select 
+            id="category" 
+            name="category" 
+            class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            required
+          >
+            <option value="programutvikling">Programutvikling</option>
+            <option value="drift">Drift og infrastruktur</option>
+            <option value="nettverk">Nettverk og sikkerhet</option>
+            <option value="database">Database</option>
+            <option value="annet">Annet</option>
+          </select>
+        </div>
+      </div>
+      
+      <div>
+        <label for="description" class="block font-medium text-gray-700 mb-2">Beskrivelse <span class="text-red-500">*</span></label>
+        <textarea 
+          id="description" 
+          name="description" 
+          rows="3" 
+          class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+          required
+        ></textarea>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div>
+          <label for="difficulty" class="block font-medium text-gray-700 mb-2">Vanskelighetsgrad <span class="text-red-500">*</span></label>
+          <select 
+            id="difficulty" 
+            name="difficulty" 
+            class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            required
+          >
+            <option value="enkel">Enkel</option>
+            <option value="middels" selected>Middels</option>
+            <option value="vanskelig">Vanskelig</option>
+          </select>
+        </div>
+        
+        <div>
+          <label for="timeLimit" class="block font-medium text-gray-700 mb-2">Tidsbegrensning (minutter) <span class="text-red-500">*</span></label>
+          <input 
+            type="number" 
+            id="timeLimit" 
+            name="timeLimit" 
+            value="10" 
+            min="1" 
+            max="60" 
+            class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            required
+          >
+        </div>
+        
+        <div>
+          <label for="isPublic" class="block font-medium text-gray-700 mb-2">Synlighet <span class="text-red-500">*</span></label>
+          <select 
+            id="isPublic" 
+            name="isPublic" 
+            class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            required
+          >
+            <option value="true" selected>Offentlig</option>
+            <option value="false">Privat</option>
+          </select>
+        </div>
+      </div>
+      
+      <div>
+        <label for="tags" class="block font-medium text-gray-700 mb-2">Tags (kommaseparert)</label>
+        <input 
+          type="text" 
+          id="tags" 
+          name="tags" 
+          placeholder="f.eks. javascript, nettverk, linux" 
+          class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+        >
+      </div>
+      
+      <!-- Questions section -->
+      <div class="mt-10">
+        <h2 class="text-xl font-semibold mb-4 flex items-center justify-between">
+          <span>Spørsmål</span>
+          <button type="button" id="add-question" class="bg-primary-600 text-white py-1 px-3 rounded-md hover:bg-primary-700 text-sm">
+            + Legg til spørsmål
+          </button>
+        </h2>
+        
+        <div id="questions-container">
+          <!-- Question template will be added here by JavaScript -->
+        </div>
+        
+        <!-- No questions message -->
+        <div id="no-questions-message" class="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+          <p class="text-gray-500 mb-3">Ingen spørsmål lagt til ennå</p>
+          <button type="button" class="add-first-question bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700">
+            Legg til første spørsmål
+          </button>
+        </div>
+      </div>
+      
+      <!-- Hidden field for questions data -->
+      <input type="hidden" name="questions" id="questions-data">
+      
+      <div class="pt-4 border-t flex justify-end">
+        <button type="submit" id="submit-quiz" class="bg-primary-600 text-white py-2 px-6 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors" disabled>
+          Opprett quiz
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Question template (hidden) -->
+<template id="question-template">
+  <div class="question-item bg-gray-50 p-4 rounded-lg mb-4 border">
+    <div class="flex justify-between items-start mb-4">
+      <h3 class="font-medium text-lg question-number">Spørsmål 1</h3>
+      <button type="button" class="delete-question text-red-600 hover:text-red-800">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+      </button>
+    </div>
+    
+    <div class="space-y-4">
+      <div>
+        <label class="block font-medium text-gray-700 mb-2">Spørsmålstekst <span class="text-red-500">*</span></label>
+        <textarea class="question-text w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" rows="2" required></textarea>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block font-medium text-gray-700 mb-2">Spørsmålstype <span class="text-red-500">*</span></label>
+          <select class="question-type w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+            <option value="multiple-choice">Flervalgsoppgave</option>
+            <option value="true-false">Sant/usant</option>
+            <option value="short-answer">Kortsvarsoppgave</option>
+            <option value="matching">Matching</option>
+          </select>
+        </div>
+        
+        <div>
+          <label class="block font-medium text-gray-700 mb-2">Poeng</label>
+          <input type="number" class="question-points w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" value="1" min="1" max="10">
+        </div>
+      </div>
+      
+      <!-- Multiple choice options -->
+      <div class="question-options multiple-choice-options">
+        <label class="block font-medium text-gray-700 mb-2">Svaralternativer <span class="text-red-500">*</span></label>
+        <div class="options-container space-y-2">
+          <div class="option-item flex items-center">
+            <input type="radio" name="correct-option-0" class="correct-option mr-2" checked>
+            <input type="text" class="option-text flex-grow px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Svaralternativ 1" required>
+            <button type="button" class="delete-option ml-2 text-red-600 hover:text-red-800" disabled>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div class="option-item flex items-center">
+            <input type="radio" name="correct-option-0" class="correct-option mr-2">
+            <input type="text" class="option-text flex-grow px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Svaralternativ 2" required>
+            <button type="button" class="delete-option ml-2 text-red-600 hover:text-red-800" disabled>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <button type="button" class="add-option mt-2 text-primary-600 hover:text-primary-800 text-sm font-medium flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          Legg til svaralternativ
+        </button>
+      </div>
+      
+      <!-- True/False options -->
+      <div class="question-options true-false-options hidden">
+        <label class="block font-medium text-gray-700 mb-2">Svar <span class="text-red-500">*</span></label>
+        <div class="options-container space-y-2">
+          <div class="option-item flex items-center">
+            <input type="radio" name="correct-tf-option-0" class="correct-option mr-2" checked>
+            <span class="flex-grow px-4 py-2">Sant</span>
+          </div>
+          <div class="option-item flex items-center">
+            <input type="radio" name="correct-tf-option-0" class="correct-option mr-2">
+            <span class="flex-grow px-4 py-2">Usant</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Short answer options -->
+      <div class="question-options short-answer-options hidden">
+        <label class="block font-medium text-gray-700 mb-2">Riktig svar <span class="text-red-500">*</span></label>
+        <input type="text" class="correct-answer w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Skriv inn riktig svar">
+      </div>
+      
+      <!-- Matching options -->
+      <div class="question-options matching-options hidden">
+        <label class="block font-medium text-gray-700 mb-2">Matching-par <span class="text-red-500">*</span></label>
+        <div class="matching-pairs-container space-y-2">
+          <div class="matching-pair grid grid-cols-2 gap-2">
+            <input type="text" class="pair-left w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Venstre side">
+            <div class="flex">
+              <input type="text" class="pair-right flex-grow px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Høyre side">
+              <button type="button" class="delete-pair ml-2 text-red-600 hover:text-red-800" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="matching-pair grid grid-cols-2 gap-2">
+            <input type="text" class="pair-left w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Venstre side">
+            <div class="flex">
+              <input type="text" class="pair-right flex-grow px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Høyre side">
+              <button type="button" class="delete-pair ml-2 text-red-600 hover:text-red-800" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="add-pair mt-2 text-primary-600 hover:text-primary-800 text-sm font-medium flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          Legg til par
+        </button>
+      </div>
+      
+      <div>
+        <label class="block font-medium text-gray-700 mb-2">Forklaring (valgfritt)</label>
+        <textarea class="question-explanation w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" rows="2" placeholder="Skriv en forklaring som vises etter at spørsmålet er besvart"></textarea>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const questionsContainer = document.getElementById('questions-container');
+    const noQuestionsMessage = document.getElementById('no-questions-message');
+    const questionTemplate = document.getElementById('question-template');
+    const addQuestionBtn = document.getElementById('add-question');
+    const addFirstQuestionBtn = document.querySelector('.add-first-question');
+    const submitQuizBtn = document.getElementById('submit-quiz');
+    const questionsDataInput = document.getElementById('questions-data');
+    
+    let questionCount = 0;
+    
+    // Add first question
+    addFirstQuestionBtn.addEventListener('click', addQuestion);
+    
+    // Add more questions
+    addQuestionBtn.addEventListener('click', addQuestion);
+    
+    // Function to add a new question
+    function addQuestion() {
+      // Hide the "no questions" message
+      noQuestionsMessage.classList.add('hidden');
+      
+      // Clone the template
+      const newQuestion = document.importNode(questionTemplate.content, true).firstElementChild;
+      
+      // Update question number
+      questionCount++;
+      newQuestion.querySelector('.question-number').textContent = `Spørsmål ${questionCount}`;
+      
+      // Update name attributes for radio buttons to make them unique per question
+      const radioButtons = newQuestion.querySelectorAll('input[type="radio"]');
+      radioButtons.forEach(radio => {
+        if (radio.name.includes('correct-option')) {
+          radio.name = `correct-option-${questionCount}`;
+        } else if (radio.name.includes('correct-tf-option')) {
+          radio.name = `correct-tf-option-${questionCount}`;
+        }
+      });
+      
+      // Add event listener to delete question button
+      newQuestion.querySelector('.delete-question').addEventListener('click', function() {
+        newQuestion.remove();
+        reorderQuestions();
+        
+        // If no questions left, show the message
+        if (questionsContainer.children.length === 0) {
+          noQuestionsMessage.classList.remove('hidden');
+          submitQuizBtn.disabled = true;
+        }
+        
+        updateQuestionsData();
+      });
+      
+      // Add event listener to question type selector
+      newQuestion.querySelector('.question-type').addEventListener('change', function(e) {
+        const questionType = e.target.value;
+        const optionsContainers = newQuestion.querySelectorAll('.question-options');
+        
+        // Hide all options containers
+        optionsContainers.forEach(container => container.classList.add('hidden'));
+        
+        // Show the selected type's options container
+        newQuestion.querySelector(`.${questionType}-options`).classList.remove('hidden');
+      });
+      
+      // Add event listener for adding options (multiple choice)
+      newQuestion.querySelector('.add-option').addEventListener('click', function() {
+        const optionsContainer = newQuestion.querySelector('.multiple-choice-options .options-container');
+        const optionItems = optionsContainer.querySelectorAll('.option-item');
+        const optionCount = optionItems.length + 1;
+        
+        const newOption = document.createElement('div');
+        newOption.className = 'option-item flex items-center';
+        newOption.innerHTML = `
+          <input type="radio" name="correct-option-${questionCount}" class="correct-option mr-2">
+          <input type="text" class="option-text flex-grow px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Svaralternativ ${optionCount}" required>
+          <button type="button" class="delete-option ml-2 text-red-600 hover:text-red-800">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        `;
+        
+        optionsContainer.appendChild(newOption);
+        
+        // Enable delete buttons if we have more than 2 options
+        if (optionsContainer.children.length > 2) {
+          optionsContainer.querySelectorAll('.delete-option').forEach(btn => btn.removeAttribute('disabled'));
+        }
+        
+        // Add delete option event listener
+        newOption.querySelector('.delete-option').addEventListener('click', function() {
+          newOption.remove();
+          
+          // Disable delete buttons if we have only 2 options
+          if (optionsContainer.children.length <= 2) {
+            optionsContainer.querySelectorAll('.delete-option').forEach(btn => btn.setAttribute('disabled', true));
+          }
+        });
+      });
+      
+      // Add event listener for adding matching pairs
+      newQuestion.querySelector('.add-pair').addEventListener('click', function() {
+        const pairsContainer = newQuestion.querySelector('.matching-pairs-container');
+        const pairItems = pairsContainer.querySelectorAll('.matching-pair');
+        
+        const newPair = document.createElement('div');
+        newPair.className = 'matching-pair grid grid-cols-2 gap-2';
+        newPair.innerHTML = `
+          <input type="text" class="pair-left w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Venstre side">
+          <div class="flex">
+            <input type="text" class="pair-right flex-grow px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Høyre side">
+            <button type="button" class="delete-pair ml-2 text-red-600 hover:text-red-800">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        `;
+        
+        pairsContainer.appendChild(newPair);
+        
+        // Enable delete buttons if we have more than 2 pairs
+        if (pairsContainer.children.length > 2) {
+          pairsContainer.querySelectorAll('.delete-pair').forEach(btn => btn.removeAttribute('disabled'));
+        }
+        
+        // Add delete pair event listener
+        newPair.querySelector('.delete-pair').addEventListener('click', function() {
+          newPair.remove();
+          
+          // Disable delete buttons if we have only 2 pairs
+          if (pairsContainer.children.length <= 2) {
+            pairsContainer.querySelectorAll('.delete-pair').forEach(btn => btn.setAttribute('disabled', true));
+          }
+        });
+      });
+      
+      // Add question to the container
+      questionsContainer.appendChild(newQuestion);
+      
+      // Enable submit button when we have at least one question
+      submitQuizBtn.disabled = false;
+      
+      // Update hidden input with questions data
+      updateQuestionsData();
+    }
+    
+    // Function to reorder question numbers after deletion
+    function reorderQuestions() {
+      const questions = questionsContainer.querySelectorAll('.question-item');
+      questionCount = questions.length;
+      
+      questions.forEach((q, index) => {
+        const number = index + 1;
+        q.querySelector('.question-number').textContent = `Spørsmål ${number}`;
+        
+        // Update radio button names
+        const mcRadios = q.querySelectorAll('input[name^="correct-option-"]');
+        mcRadios.forEach(radio => {
+          radio.name = `correct-option-${number}`;
+        });
+        
+        const tfRadios = q.querySelectorAll('input[name^="correct-tf-option-"]');
+        tfRadios.forEach(radio => {
+          radio.name = `correct-tf-option-${number}`;
+        });
+      });
+    }
+    
+    // Update questions data in hidden input
+    function updateQuestionsData() {
+      const questions = [];
+      
+      questionsContainer.querySelectorAll('.question-item').forEach(questionEl => {
+        const questionType = questionEl.querySelector('.question-type').value;
+        const questionText = questionEl.querySelector('.question-text').value;
+        const questionPoints = parseInt(questionEl.querySelector('.question-points').value) || 1;
+        const explanation = questionEl.querySelector('.question-explanation').value;
+        
+        let questionData = {
+          questionText,
+          questionType,
+          points: questionPoints,
+          explanation
+        };
+        
+        // Process options based on question type
+        switch (questionType) {
+          case 'multiple-choice':
+          case 'true-false':
+            const options = [];
+            const optionElements = questionEl.querySelectorAll(`.${questionType}-options .option-item`);
+            
+            optionElements.forEach((optionEl, idx) => {
+              const isCorrect = optionEl.querySelector('.correct-option').checked;
+              const text = questionType === 'true-false' 
+                ? (idx === 0 ? 'Sant' : 'Usant')
+                : optionEl.querySelector('.option-text').value;
+              
+              options.push({ text, isCorrect });
+            });
+            
+            questionData.options = options;
+            break;
+            
+          case 'short-answer':
+            questionData.correctAnswer = questionEl.querySelector('.correct-answer').value;
+            break;
+            
+          case 'matching':
+            const matchingPairs = [];
+            const pairElements = questionEl.querySelectorAll('.matching-pair');
+            
+            pairElements.forEach(pairEl => {
+              const left = pairEl.querySelector('.pair-left').value;
+              const right = pairEl.querySelector('.pair-right').value;
+              
+              if (left && right) {
+                matchingPairs.push({ left, right });
+              }
+            });
+            
+            questionData.matchingPairs = matchingPairs;
+            break;
+        }
+        
+        questions.push(questionData);
+      });
+      
+      questionsDataInput.value = JSON.stringify(questions);
+    }
+    
+    // Update questions data whenever any input changes
+    document.addEventListener('input', function(e) {
+      if (e.target.closest('#questions-container')) {
+        updateQuestionsData();
+      }
+    });
+    
+    // Form submission
+    document.getElementById('quiz-form').addEventListener('submit', function(e) {
+      updateQuestionsData();
+      
+      // Validate that we have at least one question
+      const questions = JSON.parse(questionsDataInput.value || '[]');
+      if (questions.length === 0) {
+        e.preventDefault();
+        alert('Du må legge til minst ett spørsmål!');
+      }
+    });
+  });
+</script> 

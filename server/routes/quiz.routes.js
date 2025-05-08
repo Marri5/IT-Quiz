@@ -4,14 +4,7 @@ const quizController = require('../controllers/quiz.controller');
 const { isAuthenticated } = require('../middleware/auth.middleware');
 
 // List all quizzes
-router.get('/', (req, res) => {
-  res.render('pages/quizzes', { 
-    title: 'IT-Quiz - Alle quizzer',
-    user: req.session.user || null,
-    filter: {},
-    quizzes: []
-  });
-});
+router.get('/', quizController.getAllQuizzes);
 
 // Get quiz by ID to play
 router.get('/play/:id', quizController.getQuizById);

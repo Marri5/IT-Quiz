@@ -19,6 +19,7 @@
             type="text" 
             id="title" 
             name="title" 
+            value="<%= quiz.title %>"
             class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
             required
           >
@@ -32,11 +33,11 @@
             class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
             required
           >
-            <option value="programutvikling">Programutvikling</option>
-            <option value="drift">Drift og infrastruktur</option>
-            <option value="nettverk">Nettverk og sikkerhet</option>
-            <option value="database">Database</option>
-            <option value="annet">Annet</option>
+            <option value="programutvikling" <%= quiz.category === 'programutvikling' ? 'selected' : '' %>>Programutvikling</option>
+            <option value="drift" <%= quiz.category === 'drift' ? 'selected' : '' %>>Drift og infrastruktur</option>
+            <option value="nettverk" <%= quiz.category === 'nettverk' ? 'selected' : '' %>>Nettverk og sikkerhet</option>
+            <option value="database" <%= quiz.category === 'database' ? 'selected' : '' %>>Database</option>
+            <option value="annet" <%= quiz.category === 'annet' ? 'selected' : '' %>>Annet</option>
           </select>
         </div>
       </div>
@@ -49,7 +50,7 @@
           rows="3" 
           class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
           required
-        ></textarea>
+        ><%= quiz.description %></textarea>
       </div>
       
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -61,9 +62,9 @@
             class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
             required
           >
-            <option value="enkel">Enkel</option>
-            <option value="middels" selected>Middels</option>
-            <option value="vanskelig">Vanskelig</option>
+            <option value="enkel" <%= quiz.difficulty === 'enkel' ? 'selected' : '' %>>Enkel</option>
+            <option value="middels" <%= quiz.difficulty === 'middels' ? 'selected' : '' %>>Middels</option>
+            <option value="vanskelig" <%= quiz.difficulty === 'vanskelig' ? 'selected' : '' %>>Vanskelig</option>
           </select>
         </div>
         
@@ -73,7 +74,7 @@
             type="number" 
             id="timeLimit" 
             name="timeLimit" 
-            value="10" 
+            value="<%= quiz.timeLimit %>" 
             min="1" 
             max="60" 
             class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -89,8 +90,8 @@
             class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
             required
           >
-            <option value="true" selected>Offentlig</option>
-            <option value="false">Privat</option>
+            <option value="true" <%= quiz.isPublic ? 'selected' : '' %>>Offentlig</option>
+            <option value="false" <%= !quiz.isPublic ? 'selected' : '' %>>Privat</option>
           </select>
         </div>
       </div>
@@ -101,6 +102,7 @@
           type="text" 
           id="tags" 
           name="tags" 
+          value="<%= quiz.tags ? quiz.tags.join(', ') : '' %>"
           placeholder="f.eks. javascript, nettverk, linux" 
           class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
         >
@@ -272,6 +274,225 @@
     const questionsDataInput = document.getElementById('questions-data');
     
     let questionCount = 0;
+    
+    // Function to add a new question
+    function addQuestion() {
+      // Hide the "no questions" message
+      noQuestionsMessage.classList.add('hidden');
+      
+      // Clone the template
+      const newQuestion = document.importNode(questionTemplate.content, true).firstElementChild;
+      
+      // Update question number
+      questionCount++;
+      newQuestion.querySelector('.question-number').textContent = `Spørsmål ${questionCount}`;
+      
+      // Update name attributes for radio buttons to make them unique per question
+      const radioButtons = newQuestion.querySelectorAll('input[type="radio"]');
+      radioButtons.forEach(radio => {
+        if (radio.name.includes('correct-option')) {
+          radio.name = `correct-option-${questionCount}`;
+        } else if (radio.name.includes('correct-tf-option')) {
+          radio.name = `correct-tf-option-${questionCount}`;
+        }
+      });
+      
+      // Add event listener to delete question button
+      newQuestion.querySelector('.delete-question').addEventListener('click', function() {
+        newQuestion.remove();
+        reorderQuestions();
+        
+        // If no questions left, show the message
+        if (questionsContainer.children.length === 0) {
+          noQuestionsMessage.classList.remove('hidden');
+          submitQuizBtn.disabled = true;
+        }
+        
+        updateQuestionsData();
+      });
+      
+      // Add event listener to question type selector
+      newQuestion.querySelector('.question-type').addEventListener('change', function(e) {
+        const questionType = e.target.value;
+        const optionsContainers = newQuestion.querySelectorAll('.question-options');
+        
+        // Hide all options containers
+        optionsContainers.forEach(container => container.classList.add('hidden'));
+        
+        // Show the selected type's options container
+        newQuestion.querySelector(`.${questionType}-options`).classList.remove('hidden');
+      });
+      
+      // Add event listener for adding options (multiple choice)
+      newQuestion.querySelector('.add-option').addEventListener('click', function() {
+        const optionsContainer = newQuestion.querySelector('.multiple-choice-options .options-container');
+        const optionItems = optionsContainer.querySelectorAll('.option-item');
+        const optionCount = optionItems.length + 1;
+        
+        const newOption = document.createElement('div');
+        newOption.className = 'option-item flex items-center';
+        newOption.innerHTML = `
+          <input type="radio" name="correct-option-${questionCount}" class="correct-option mr-2">
+          <input type="text" class="option-text flex-grow px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Svaralternativ ${optionCount}" required>
+          <button type="button" class="delete-option ml-2 text-red-600 hover:text-red-800">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        `;
+        
+        optionsContainer.appendChild(newOption);
+        
+        // Enable delete buttons if we have more than 2 options
+        if (optionsContainer.children.length > 2) {
+          optionsContainer.querySelectorAll('.delete-option').forEach(btn => btn.removeAttribute('disabled'));
+        }
+        
+        // Add delete option event listener
+        newOption.querySelector('.delete-option').addEventListener('click', function() {
+          newOption.remove();
+          
+          // Disable delete buttons if we have only 2 options
+          if (optionsContainer.children.length <= 2) {
+            optionsContainer.querySelectorAll('.delete-option').forEach(btn => btn.setAttribute('disabled', true));
+          }
+        });
+      });
+      
+      // Add event listener for adding matching pairs
+      newQuestion.querySelector('.add-pair').addEventListener('click', function() {
+        const pairsContainer = newQuestion.querySelector('.matching-pairs-container');
+        const pairItems = pairsContainer.querySelectorAll('.matching-pair');
+        
+        const newPair = document.createElement('div');
+        newPair.className = 'matching-pair grid grid-cols-2 gap-2';
+        newPair.innerHTML = `
+          <input type="text" class="pair-left w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Venstre side">
+          <div class="flex">
+            <input type="text" class="pair-right flex-grow px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Høyre side">
+            <button type="button" class="delete-pair ml-2 text-red-600 hover:text-red-800" disabled>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        `;
+        
+        pairsContainer.appendChild(newPair);
+        
+        // Enable delete buttons if we have more than 2 pairs
+        if (pairsContainer.children.length > 2) {
+          pairsContainer.querySelectorAll('.delete-pair').forEach(btn => btn.removeAttribute('disabled'));
+        }
+        
+        // Add delete pair event listener
+        newPair.querySelector('.delete-pair').addEventListener('click', function() {
+          newPair.remove();
+          
+          // Disable delete buttons if we have only 2 pairs
+          if (pairsContainer.children.length <= 2) {
+            pairsContainer.querySelectorAll('.delete-pair').forEach(btn => btn.setAttribute('disabled', true));
+          }
+        });
+      });
+      
+      // Add question to the container
+      questionsContainer.appendChild(newQuestion);
+      
+      // Enable submit button when we have at least one question
+      submitQuizBtn.disabled = false;
+      
+      // Update hidden input with questions data
+      updateQuestionsData();
+      
+      return newQuestion;
+    }
+    
+    // Function to reorder question numbers after deletion
+    function reorderQuestions() {
+      const questions = questionsContainer.querySelectorAll('.question-item');
+      questionCount = questions.length;
+      
+      questions.forEach((q, index) => {
+        const number = index + 1;
+        q.querySelector('.question-number').textContent = `Spørsmål ${number}`;
+        
+        // Update radio button names
+        const mcRadios = q.querySelectorAll('input[name^="correct-option-"]');
+        mcRadios.forEach(radio => {
+          radio.name = `correct-option-${number}`;
+        });
+        
+        const tfRadios = q.querySelectorAll('input[name^="correct-tf-option-"]');
+        tfRadios.forEach(radio => {
+          radio.name = `correct-tf-option-${number}`;
+        });
+      });
+    }
+    
+    // Update questions data in hidden input
+    function updateQuestionsData() {
+      const questions = [];
+      
+      questionsContainer.querySelectorAll('.question-item').forEach(questionEl => {
+        const questionType = questionEl.querySelector('.question-type').value;
+        const questionText = questionEl.querySelector('.question-text').value;
+        const questionPoints = parseInt(questionEl.querySelector('.question-points').value) || 1;
+        const explanation = questionEl.querySelector('.question-explanation').value;
+        
+        let questionData = {
+          questionText,
+          questionType,
+          points: questionPoints,
+          explanation
+        };
+        
+        // Process options based on question type
+        switch (questionType) {
+          case 'multiple-choice':
+          case 'true-false':
+            const options = [];
+            const optionElements = questionEl.querySelectorAll(`.${questionType}-options .option-item`);
+            
+            optionElements.forEach((optionEl, idx) => {
+              const isCorrect = optionEl.querySelector('.correct-option').checked;
+              const text = questionType === 'true-false' 
+                ? (idx === 0 ? 'Sant' : 'Usant')
+                : optionEl.querySelector('.option-text').value;
+              
+              options.push({ text, isCorrect });
+            });
+            
+            questionData.options = options;
+            break;
+            
+          case 'short-answer':
+            questionData.correctAnswer = questionEl.querySelector('.correct-answer').value;
+            break;
+            
+          case 'matching':
+            const matchingPairs = [];
+            const pairElements = questionEl.querySelectorAll('.matching-pair');
+            
+            pairElements.forEach(pairEl => {
+              const left = pairEl.querySelector('.pair-left').value;
+              const right = pairEl.querySelector('.pair-right').value;
+              
+              if (left && right) {
+                matchingPairs.push({ left, right });
+              }
+            });
+            
+            questionData.matchingPairs = matchingPairs;
+            break;
+        }
+        
+        questions.push(questionData);
+      });
+      
+      questionsDataInput.value = JSON.stringify(questions);
+    }
+    
     // Load existing questions
     const existingQuestions = JSON.parse('<%- JSON.stringify(quiz.questions || []) %>');
     
@@ -405,222 +626,6 @@
     
     // Add more questions
     addQuestionBtn.addEventListener('click', addQuestion);
-    
-    // Function to add a new question
-    function addQuestion() {
-      // Hide the "no questions" message
-      noQuestionsMessage.classList.add('hidden');
-      
-      // Clone the template
-      const newQuestion = document.importNode(questionTemplate.content, true).firstElementChild;
-      
-      // Update question number
-      questionCount++;
-      newQuestion.querySelector('.question-number').textContent = `Spørsmål ${questionCount}`;
-      
-      // Update name attributes for radio buttons to make them unique per question
-      const radioButtons = newQuestion.querySelectorAll('input[type="radio"]');
-      radioButtons.forEach(radio => {
-        if (radio.name.includes('correct-option')) {
-          radio.name = `correct-option-${questionCount}`;
-        } else if (radio.name.includes('correct-tf-option')) {
-          radio.name = `correct-tf-option-${questionCount}`;
-        }
-      });
-      
-      // Add event listener to delete question button
-      newQuestion.querySelector('.delete-question').addEventListener('click', function() {
-        newQuestion.remove();
-        reorderQuestions();
-        
-        // If no questions left, show the message
-        if (questionsContainer.children.length === 0) {
-          noQuestionsMessage.classList.remove('hidden');
-          submitQuizBtn.disabled = true;
-        }
-        
-        updateQuestionsData();
-      });
-      
-      // Add event listener to question type selector
-      newQuestion.querySelector('.question-type').addEventListener('change', function(e) {
-        const questionType = e.target.value;
-        const optionsContainers = newQuestion.querySelectorAll('.question-options');
-        
-        // Hide all options containers
-        optionsContainers.forEach(container => container.classList.add('hidden'));
-        
-        // Show the selected type's options container
-        newQuestion.querySelector(`.${questionType}-options`).classList.remove('hidden');
-      });
-      
-      // Add event listener for adding options (multiple choice)
-      newQuestion.querySelector('.add-option').addEventListener('click', function() {
-        const optionsContainer = newQuestion.querySelector('.multiple-choice-options .options-container');
-        const optionItems = optionsContainer.querySelectorAll('.option-item');
-        const optionCount = optionItems.length + 1;
-        
-        const newOption = document.createElement('div');
-        newOption.className = 'option-item flex items-center';
-        newOption.innerHTML = `
-          <input type="radio" name="correct-option-${questionCount}" class="correct-option mr-2">
-          <input type="text" class="option-text flex-grow px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Svaralternativ ${optionCount}" required>
-          <button type="button" class="delete-option ml-2 text-red-600 hover:text-red-800">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        `;
-        
-        optionsContainer.appendChild(newOption);
-        
-        // Enable delete buttons if we have more than 2 options
-        if (optionsContainer.children.length > 2) {
-          optionsContainer.querySelectorAll('.delete-option').forEach(btn => btn.removeAttribute('disabled'));
-        }
-        
-        // Add delete option event listener
-        newOption.querySelector('.delete-option').addEventListener('click', function() {
-          newOption.remove();
-          
-          // Disable delete buttons if we have only 2 options
-          if (optionsContainer.children.length <= 2) {
-            optionsContainer.querySelectorAll('.delete-option').forEach(btn => btn.setAttribute('disabled', true));
-          }
-        });
-      });
-      
-      // Add event listener for adding matching pairs
-      newQuestion.querySelector('.add-pair').addEventListener('click', function() {
-        const pairsContainer = newQuestion.querySelector('.matching-pairs-container');
-        const pairItems = pairsContainer.querySelectorAll('.matching-pair');
-        
-        const newPair = document.createElement('div');
-        newPair.className = 'matching-pair grid grid-cols-2 gap-2';
-        newPair.innerHTML = `
-          <input type="text" class="pair-left w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Venstre side">
-          <div class="flex">
-            <input type="text" class="pair-right flex-grow px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Høyre side">
-            <button type="button" class="delete-pair ml-2 text-red-600 hover:text-red-800" disabled>
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        `;
-        
-        pairsContainer.appendChild(newPair);
-        
-        // Enable delete buttons if we have more than 2 pairs
-        if (pairsContainer.children.length > 2) {
-          pairsContainer.querySelectorAll('.delete-pair').forEach(btn => btn.removeAttribute('disabled'));
-        }
-        
-        // Add delete pair event listener
-        newPair.querySelector('.delete-pair').addEventListener('click', function() {
-          newPair.remove();
-          
-          // Disable delete buttons if we have only 2 pairs
-          if (pairsContainer.children.length <= 2) {
-            pairsContainer.querySelectorAll('.delete-pair').forEach(btn => btn.setAttribute('disabled', true));
-          }
-        });
-      });
-      
-      // Add question to the container
-      questionsContainer.appendChild(newQuestion);
-      
-      // Enable submit button when we have at least one question
-      submitQuizBtn.disabled = false;
-      
-      // Update hidden input with questions data
-      updateQuestionsData();
-    }
-    
-    // Function to reorder question numbers after deletion
-    function reorderQuestions() {
-      const questions = questionsContainer.querySelectorAll('.question-item');
-      questionCount = questions.length;
-      
-      questions.forEach((q, index) => {
-        const number = index + 1;
-        q.querySelector('.question-number').textContent = `Spørsmål ${number}`;
-        
-        // Update radio button names
-        const mcRadios = q.querySelectorAll('input[name^="correct-option-"]');
-        mcRadios.forEach(radio => {
-          radio.name = `correct-option-${number}`;
-        });
-        
-        const tfRadios = q.querySelectorAll('input[name^="correct-tf-option-"]');
-        tfRadios.forEach(radio => {
-          radio.name = `correct-tf-option-${number}`;
-        });
-      });
-    }
-    
-    // Update questions data in hidden input
-    function updateQuestionsData() {
-      const questions = [];
-      
-      questionsContainer.querySelectorAll('.question-item').forEach(questionEl => {
-        const questionType = questionEl.querySelector('.question-type').value;
-        const questionText = questionEl.querySelector('.question-text').value;
-        const questionPoints = parseInt(questionEl.querySelector('.question-points').value) || 1;
-        const explanation = questionEl.querySelector('.question-explanation').value;
-        
-        let questionData = {
-          questionText,
-          questionType,
-          points: questionPoints,
-          explanation
-        };
-        
-        // Process options based on question type
-        switch (questionType) {
-          case 'multiple-choice':
-          case 'true-false':
-            const options = [];
-            const optionElements = questionEl.querySelectorAll(`.${questionType}-options .option-item`);
-            
-            optionElements.forEach((optionEl, idx) => {
-              const isCorrect = optionEl.querySelector('.correct-option').checked;
-              const text = questionType === 'true-false' 
-                ? (idx === 0 ? 'Sant' : 'Usant')
-                : optionEl.querySelector('.option-text').value;
-              
-              options.push({ text, isCorrect });
-            });
-            
-            questionData.options = options;
-            break;
-            
-          case 'short-answer':
-            questionData.correctAnswer = questionEl.querySelector('.correct-answer').value;
-            break;
-            
-          case 'matching':
-            const matchingPairs = [];
-            const pairElements = questionEl.querySelectorAll('.matching-pair');
-            
-            pairElements.forEach(pairEl => {
-              const left = pairEl.querySelector('.pair-left').value;
-              const right = pairEl.querySelector('.pair-right').value;
-              
-              if (left && right) {
-                matchingPairs.push({ left, right });
-              }
-            });
-            
-            questionData.matchingPairs = matchingPairs;
-            break;
-        }
-        
-        questions.push(questionData);
-      });
-      
-      questionsDataInput.value = JSON.stringify(questions);
-    }
     
     // Update questions data whenever any input changes
     document.addEventListener('input', function(e) {

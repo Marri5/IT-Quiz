@@ -1,0 +1,259 @@
+<div class="max-w-6xl mx-auto">
+  <div class="mb-8">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-bold mb-2">Brukerdetaljer: <%= profileUser.username %></h1>
+        <p class="text-gray-600">Detaljert informasjon om brukeren</p>
+      </div>
+      <a href="/admin/users" class="text-primary-600 hover:text-primary-800 font-medium">
+        ← Tilbake til brukere
+      </a>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- User Information -->
+    <div class="lg:col-span-1">
+      <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h2 class="text-xl font-semibold text-gray-900">Brukerinformasjon</h2>
+        </div>
+        <div class="p-6">
+          <div class="flex items-center mb-6">
+            <div class="h-20 w-20 rounded-full bg-primary-100 flex items-center justify-center">
+              <span class="text-2xl font-bold text-primary-600">
+                <%= profileUser.username.charAt(0).toUpperCase() %>
+              </span>
+            </div>
+            <div class="ml-4">
+              <h3 class="text-lg font-medium text-gray-900"><%= profileUser.username %></h3>
+              <span class="px-2 py-1 text-xs font-medium rounded-full <%= profileUser.role === 'admin' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' %>">
+                <%= profileUser.role === 'admin' ? 'Administrator' : 'Bruker' %>
+              </span>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">E-post</label>
+              <p class="mt-1 text-sm text-gray-900"><%= profileUser.email %></p>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Registrert</label>
+              <p class="mt-1 text-sm text-gray-900"><%= new Date(profileUser.createdAt).toLocaleDateString('no-NO') %></p>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Sist oppdatert</label>
+              <p class="mt-1 text-sm text-gray-900"><%= new Date(profileUser.updatedAt).toLocaleDateString('no-NO') %></p>
+            </div>
+          </div>
+
+          <div class="mt-6 pt-6 border-t border-gray-200">
+            <h4 class="text-sm font-medium text-gray-700 mb-3">Handlinger</h4>
+            <div class="space-y-2">
+              <button 
+                onclick="toggleUserRole('<%= profileUser._id %>', '<%= profileUser.role %>')"
+                class="w-full text-left px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md"
+              >
+                <%= profileUser.role === 'admin' ? 'Gjør til vanlig bruker' : 'Gjør til administrator' %>
+              </button>
+              
+              <% if (profileUser._id.toString() !== user._id.toString()) { %>
+                <button 
+                  onclick="deleteUser('<%= profileUser._id %>', '<%= profileUser.username %>')"
+                  class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md"
+                >
+                  Slett bruker
+                </button>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- User's Quizzes and Activity -->
+    <div class="lg:col-span-2">
+      <div class="space-y-8">
+        <!-- Statistics -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+              <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div class="ml-4">
+                <h3 class="text-sm font-medium text-gray-700">Quizzer Laget</h3>
+                <p class="text-2xl font-bold text-blue-600"><%= profileUser.quizzes ? profileUser.quizzes.length : 0 %></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+              <div class="p-3 rounded-full bg-green-100 text-green-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div class="ml-4">
+                <h3 class="text-sm font-medium text-gray-700">Quizzer Fullført</h3>
+                <p class="text-2xl font-bold text-green-600"><%= profileUser.completedQuizzes ? profileUser.completedQuizzes.length : 0 %></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+              <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <div class="ml-4">
+                <h3 class="text-sm font-medium text-gray-700">Gjennomsnittlig Score</h3>
+                <p class="text-2xl font-bold text-purple-600">
+                  <% if (profileUser.completedQuizzes && profileUser.completedQuizzes.length > 0) { %>
+                    <%= Math.round(profileUser.completedQuizzes.reduce((sum, quiz) => sum + quiz.score, 0) / profileUser.completedQuizzes.length) %>%
+                  <% } else { %>
+                    N/A
+                  <% } %>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- User's Quizzes -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-900">Brukerens Quizzer</h2>
+          </div>
+          <div class="p-6">
+            <% if (profileUser.quizzes && profileUser.quizzes.length > 0) { %>
+              <div class="space-y-4">
+                <% profileUser.quizzes.forEach(quiz => { %>
+                  <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div class="flex-grow">
+                      <h3 class="font-medium text-gray-900"><%= quiz.title %></h3>
+                      <p class="text-sm text-gray-600"><%= quiz.description.substring(0, 100) %><%= quiz.description.length > 100 ? '...' : '' %></p>
+                      <div class="flex items-center mt-2 space-x-4">
+                        <span class="text-xs text-gray-500"><%= quiz.questions.length %> spørsmål</span>
+                        <span class="text-xs text-gray-500"><%= quiz.plays %> gjennomføringer</span>
+                        <span class="px-2 py-1 text-xs font-medium rounded-full <%= quiz.isPublic ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' %>">
+                          <%= quiz.isPublic ? 'Offentlig' : 'Privat' %>
+                        </span>
+                      </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                      <a href="/quiz/play/<%= quiz._id %>" class="text-primary-600 hover:text-primary-800 text-sm font-medium">
+                        Spill
+                      </a>
+                      <a href="/admin/quiz/<%= quiz._id %>" class="text-gray-600 hover:text-gray-800 text-sm font-medium">
+                        Detaljer
+                      </a>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            <% } else { %>
+              <p class="text-gray-500 text-center py-4">Brukeren har ikke laget noen quizzer ennå.</p>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Quiz Results -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-900">Quiz Resultater</h2>
+          </div>
+          <div class="p-6">
+            <% if (profileUser.completedQuizzes && profileUser.completedQuizzes.length > 0) { %>
+              <div class="space-y-4">
+                <% profileUser.completedQuizzes.slice(0, 10).forEach(result => { %>
+                  <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div class="flex-grow">
+                      <h3 class="font-medium text-gray-900"><%= result.quiz ? result.quiz.title : 'Quiz slettet' %></h3>
+                      <p class="text-sm text-gray-600">Fullført: <%= new Date(result.completedAt).toLocaleDateString('no-NO') %></p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                      <span class="px-3 py-1 rounded-full text-sm font-medium <%= result.score >= 80 ? 'bg-green-100 text-green-800' : result.score >= 60 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800' %>">
+                        <%= result.score %>%
+                      </span>
+                      <% if (result.quiz) { %>
+                        <a href="/quiz/play/<%= result.quiz._id %>" class="text-primary-600 hover:text-primary-800 text-sm font-medium">
+                          Spill igjen
+                        </a>
+                      <% } %>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+              <% if (profileUser.completedQuizzes.length > 10) { %>
+                <p class="text-center text-sm text-gray-600 mt-4">Viser 10 av <%= profileUser.completedQuizzes.length %> resultater</p>
+              <% } %>
+            <% } else { %>
+              <p class="text-gray-500 text-center py-4">Brukeren har ikke fullført noen quizzer ennå.</p>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleUserRole(userId, currentRole) {
+  const newRole = currentRole === 'admin' ? 'user' : 'admin';
+  const action = newRole === 'admin' ? 'gjøre til administrator' : 'gjøre til vanlig bruker';
+  
+  if (confirm(`Er du sikker på at du vil ${action}?`)) {
+    fetch(`/admin/user/${userId}/update`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ role: newRole })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        location.reload();
+      } else {
+        alert('Feil ved oppdatering av brukerrolle: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('En feil oppstod ved oppdatering av brukerrolle.');
+    });
+  }
+}
+
+function deleteUser(userId, username) {
+  if (confirm(`Er du sikker på at du vil slette brukeren "${username}"? Dette kan ikke angres.`)) {
+    fetch(`/admin/user/${userId}/delete`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        window.location.href = '/admin/users';
+      } else {
+        alert('Feil ved sletting av bruker: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('En feil oppstod ved sletting av brukeren.');
+    });
+  }
+}
+</script> 

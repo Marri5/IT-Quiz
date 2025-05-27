@@ -1,0 +1,343 @@
+<div class="max-w-6xl mx-auto">
+  <div class="mb-8">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-bold mb-2">Quiz Detaljer: <%= quiz.title %></h1>
+        <p class="text-gray-600">Detaljert informasjon om quizen</p>
+      </div>
+      <a href="/admin/quizzes" class="text-primary-600 hover:text-primary-800 font-medium">
+        ← Tilbake til quizzer
+      </a>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Quiz Information -->
+    <div class="lg:col-span-1">
+      <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h2 class="text-xl font-semibold text-gray-900">Quiz Informasjon</h2>
+        </div>
+        <div class="p-6">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Tittel</label>
+              <p class="mt-1 text-sm text-gray-900"><%= quiz.title %></p>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Beskrivelse</label>
+              <p class="mt-1 text-sm text-gray-900"><%= quiz.description %></p>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Forfatter</label>
+              <p class="mt-1 text-sm text-gray-900">
+                <a href="/admin/user/<%= quiz.author._id %>" class="text-primary-600 hover:text-primary-800">
+                  <%= quiz.author.username %>
+                </a>
+              </p>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Kategori</label>
+              <span class="mt-1 px-2 py-1 text-xs font-medium rounded-full <%= {
+                'programutvikling': 'bg-blue-100 text-blue-800',
+                'drift': 'bg-green-100 text-green-800',
+                'nettverk': 'bg-purple-100 text-purple-800',
+                'database': 'bg-yellow-100 text-yellow-800',
+                'annet': 'bg-gray-100 text-gray-800'
+              }[quiz.category] || 'bg-gray-100 text-gray-800' %>">
+                <%= {
+                  'programutvikling': 'Programutvikling',
+                  'drift': 'Drift',
+                  'nettverk': 'Nettverk',
+                  'database': 'Database',
+                  'annet': 'Annet'
+                }[quiz.category] || 'Ukjent' %>
+              </span>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Vanskelighetsgrad</label>
+              <span class="mt-1 px-2 py-1 text-xs font-medium rounded-full <%= {
+                'enkel': 'bg-green-100 text-green-800',
+                'middels': 'bg-yellow-100 text-yellow-800',
+                'vanskelig': 'bg-red-100 text-red-800'
+              }[quiz.difficulty] || 'bg-gray-100 text-gray-800' %>">
+                <%= {
+                  'enkel': 'Enkel',
+                  'middels': 'Middels',
+                  'vanskelig': 'Vanskelig'
+                }[quiz.difficulty] || 'Ukjent' %>
+              </span>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Tidsgrense</label>
+              <p class="mt-1 text-sm text-gray-900"><%= quiz.timeLimit %> minutter</p>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Status</label>
+              <span class="mt-1 px-2 py-1 text-xs font-medium rounded-full <%= quiz.isPublic ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' %>">
+                <%= quiz.isPublic ? 'Offentlig' : 'Privat' %>
+              </span>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Opprettet</label>
+              <p class="mt-1 text-sm text-gray-900"><%= new Date(quiz.createdAt).toLocaleDateString('no-NO') %></p>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Sist oppdatert</label>
+              <p class="mt-1 text-sm text-gray-900"><%= new Date(quiz.updatedAt).toLocaleDateString('no-NO') %></p>
+            </div>
+
+            <% if (quiz.tags && quiz.tags.length > 0) { %>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Tags</label>
+                <div class="mt-1 flex flex-wrap gap-1">
+                  <% quiz.tags.forEach(tag => { %>
+                    <span class="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full"><%= tag %></span>
+                  <% }) %>
+                </div>
+              </div>
+            <% } %>
+          </div>
+
+          <div class="mt-6 pt-6 border-t border-gray-200">
+            <h4 class="text-sm font-medium text-gray-700 mb-3">Handlinger</h4>
+            <div class="space-y-2">
+              <a href="/quiz/play/<%= quiz._id %>" class="block w-full text-center px-3 py-2 text-sm bg-primary-600 text-white rounded-md hover:bg-primary-700">
+                Spill Quiz
+              </a>
+              
+              <% if (user._id.toString() === quiz.author._id.toString() || user.role === 'admin') { %>
+                <a href="/quiz/edit/<%= quiz._id %>" class="block w-full text-center px-3 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                  Rediger Quiz
+                </a>
+              <% } %>
+              
+              <button 
+                onclick="toggleQuizStatus('<%= quiz._id %>', <%= quiz.isPublic %>)"
+                class="w-full text-left px-3 py-2 text-sm text-yellow-600 hover:bg-yellow-50 rounded-md"
+              >
+                <%= quiz.isPublic ? 'Gjør privat' : 'Gjør offentlig' %>
+              </button>
+              
+              <button 
+                onclick="deleteQuiz('<%= quiz._id %>', '<%= quiz.title %>')"
+                class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md"
+              >
+                Slett Quiz
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quiz Statistics and Questions -->
+    <div class="lg:col-span-2">
+      <div class="space-y-8">
+        <!-- Statistics -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+              <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div class="ml-4">
+                <h3 class="text-sm font-medium text-gray-700">Antall Spørsmål</h3>
+                <p class="text-2xl font-bold text-blue-600"><%= quiz.questions.length %></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+              <div class="p-3 rounded-full bg-green-100 text-green-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <div class="ml-4">
+                <h3 class="text-sm font-medium text-gray-700">Gjennomføringer</h3>
+                <p class="text-2xl font-bold text-green-600"><%= quiz.plays %></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+              <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <div class="ml-4">
+                <h3 class="text-sm font-medium text-gray-700">Gjennomsnittlig Score</h3>
+                <p class="text-2xl font-bold text-purple-600">
+                  <% if (quiz.plays > 0) { %>
+                    N/A
+                  <% } else { %>
+                    N/A
+                  <% } %>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Questions -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-900">Spørsmål (<%= quiz.questions.length %>)</h2>
+          </div>
+          <div class="p-6">
+            <% if (quiz.questions && quiz.questions.length > 0) { %>
+              <div class="space-y-6">
+                <% quiz.questions.forEach((question, index) => { %>
+                  <div class="border border-gray-200 rounded-lg p-4">
+                    <div class="flex items-start justify-between mb-3">
+                      <h3 class="font-medium text-gray-900">Spørsmål <%= index + 1 %></h3>
+                      <span class="px-2 py-1 text-xs font-medium rounded-full <%= {
+                        'multiple-choice': 'bg-blue-100 text-blue-800',
+                        'true-false': 'bg-green-100 text-green-800',
+                        'short-answer': 'bg-purple-100 text-purple-800',
+                        'matching': 'bg-yellow-100 text-yellow-800'
+                      }[question.type] || 'bg-gray-100 text-gray-800' %>">
+                        <%= {
+                          'multiple-choice': 'Flervalg',
+                          'true-false': 'Sant/Usant',
+                          'short-answer': 'Kort svar',
+                          'matching': 'Match'
+                        }[question.type] || 'Ukjent' %>
+                      </span>
+                    </div>
+                    
+                    <p class="text-gray-700 mb-3"><%= question.question %></p>
+                    
+                    <% if (question.type === 'multiple-choice') { %>
+                      <div class="space-y-2">
+                        <% question.options.forEach((option, optIndex) => { %>
+                          <div class="flex items-center">
+                            <span class="w-6 h-6 flex items-center justify-center text-xs border rounded mr-2 <%= question.correctAnswer === optIndex ? 'bg-green-100 border-green-300 text-green-800' : 'border-gray-300' %>">
+                              <%= String.fromCharCode(65 + optIndex) %>
+                            </span>
+                            <span class="<%= question.correctAnswer === optIndex ? 'text-green-800 font-medium' : 'text-gray-700' %>">
+                              <%= option %>
+                            </span>
+                          </div>
+                        <% }) %>
+                      </div>
+                    <% } else if (question.type === 'true-false') { %>
+                      <div class="space-y-2">
+                        <div class="flex items-center">
+                          <span class="w-6 h-6 flex items-center justify-center text-xs border rounded mr-2 <%= question.correctAnswer === true ? 'bg-green-100 border-green-300 text-green-800' : 'border-gray-300' %>">
+                            S
+                          </span>
+                          <span class="<%= question.correctAnswer === true ? 'text-green-800 font-medium' : 'text-gray-700' %>">
+                            Sant
+                          </span>
+                        </div>
+                        <div class="flex items-center">
+                          <span class="w-6 h-6 flex items-center justify-center text-xs border rounded mr-2 <%= question.correctAnswer === false ? 'bg-green-100 border-green-300 text-green-800' : 'border-gray-300' %>">
+                            U
+                          </span>
+                          <span class="<%= question.correctAnswer === false ? 'text-green-800 font-medium' : 'text-gray-700' %>">
+                            Usant
+                          </span>
+                        </div>
+                      </div>
+                    <% } else if (question.type === 'short-answer') { %>
+                      <div class="bg-green-50 border border-green-200 rounded p-2">
+                        <span class="text-sm text-green-800">Korrekt svar: <%= question.correctAnswer %></span>
+                      </div>
+                    <% } else if (question.type === 'matching') { %>
+                      <div class="grid grid-cols-2 gap-4">
+                        <div>
+                          <h4 class="text-sm font-medium text-gray-700 mb-2">Venstre side:</h4>
+                          <% question.leftColumn.forEach((item, idx) => { %>
+                            <div class="text-sm text-gray-600 mb-1"><%= idx + 1 %>. <%= item %></div>
+                          <% }) %>
+                        </div>
+                        <div>
+                          <h4 class="text-sm font-medium text-gray-700 mb-2">Høyre side:</h4>
+                          <% question.rightColumn.forEach((item, idx) => { %>
+                            <div class="text-sm text-gray-600 mb-1"><%= String.fromCharCode(65 + idx) %>. <%= item %></div>
+                          <% }) %>
+                        </div>
+                      </div>
+                      <div class="mt-2 bg-green-50 border border-green-200 rounded p-2">
+                        <span class="text-sm text-green-800">Korrekte par: <%= question.correctPairs.map(pair => `${pair.left + 1}-${String.fromCharCode(65 + pair.right)}`).join(', ') %></span>
+                      </div>
+                    <% } %>
+                  </div>
+                <% }) %>
+              </div>
+            <% } else { %>
+              <p class="text-gray-500 text-center py-4">Denne quizen har ingen spørsmål ennå.</p>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleQuizStatus(quizId, isPublic) {
+  const newStatus = !isPublic;
+  const action = newStatus ? 'gjøre offentlig' : 'gjøre privat';
+  
+  if (confirm(`Er du sikker på at du vil ${action} denne quizen?`)) {
+    fetch(`/admin/quiz/${quizId}/update`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ isPublic: newStatus })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        location.reload();
+      } else {
+        alert('Feil ved oppdatering av quiz status: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('En feil oppstod ved oppdatering av quiz status.');
+    });
+  }
+}
+
+function deleteQuiz(quizId, quizTitle) {
+  if (confirm(`Er du sikker på at du vil slette quizen "${quizTitle}"? Dette kan ikke angres.`)) {
+    fetch(`/admin/quiz/${quizId}/delete`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        window.location.href = '/admin/quizzes';
+      } else {
+        alert('Feil ved sletting av quiz: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('En feil oppstod ved sletting av quizen.');
+    });
+  }
+}
+</script> 

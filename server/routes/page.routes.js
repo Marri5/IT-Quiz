@@ -3,6 +3,7 @@ const router = express.Router();
 
 // Import middleware
 const { isAuthenticated } = require('../middleware/auth.middleware');
+const userController = require('../controllers/user.controller');
 
 // Home page
 router.get('/', (req, res) => {
@@ -29,11 +30,6 @@ router.get('/about', (req, res) => {
 });
 
 // Profile page (requires authentication)
-router.get('/profile', isAuthenticated, (req, res) => {
-  res.render('pages/profile', { 
-    title: 'IT-Quiz - Min profil',
-    user: req.session.user
-  });
-});
+router.get('/profile', isAuthenticated, userController.getProfile);
 
 module.exports = router; 

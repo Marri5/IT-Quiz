@@ -183,7 +183,7 @@
                 <h3 class="text-sm font-medium text-gray-700">Gjennomsnittlig Score</h3>
                 <p class="text-2xl font-bold text-purple-600">
                   <% if (quiz.plays > 0) { %>
-                    N/A
+                    <%= Math.round(quiz.averageScore) %>%
                   <% } else { %>
                     N/A
                   <% } %>
@@ -210,71 +210,58 @@
                         'true-false': 'bg-green-100 text-green-800',
                         'short-answer': 'bg-purple-100 text-purple-800',
                         'matching': 'bg-yellow-100 text-yellow-800'
-                      }[question.type] || 'bg-gray-100 text-gray-800' %>">
+                      }[question.questionType] || 'bg-gray-100 text-gray-800' %>">
                         <%= {
                           'multiple-choice': 'Flervalg',
                           'true-false': 'Sant/Usant',
                           'short-answer': 'Kort svar',
                           'matching': 'Match'
-                        }[question.type] || 'Ukjent' %>
+                        }[question.questionType] || 'Ukjent' %>
                       </span>
                     </div>
                     
-                    <p class="text-gray-700 mb-3"><%= question.question %></p>
+                    <p class="text-gray-700 mb-3"><%= question.questionText %></p>
                     
-                    <% if (question.type === 'multiple-choice') { %>
+                    <% if (question.questionType === 'multiple-choice') { %>
                       <div class="space-y-2">
                         <% question.options.forEach((option, optIndex) => { %>
                           <div class="flex items-center">
-                            <span class="w-6 h-6 flex items-center justify-center text-xs border rounded mr-2 <%= question.correctAnswer === optIndex ? 'bg-green-100 border-green-300 text-green-800' : 'border-gray-300' %>">
+                            <span class="w-6 h-6 flex items-center justify-center text-xs border rounded mr-2 <%= option.isCorrect ? 'bg-green-100 border-green-300 text-green-800' : 'border-gray-300' %>">
                               <%= String.fromCharCode(65 + optIndex) %>
                             </span>
-                            <span class="<%= question.correctAnswer === optIndex ? 'text-green-800 font-medium' : 'text-gray-700' %>">
-                              <%= option %>
+                            <span class="<%= option.isCorrect ? 'text-green-800 font-medium' : 'text-gray-700' %>">
+                              <%= option.text %>
                             </span>
                           </div>
                         <% }) %>
                       </div>
-                    <% } else if (question.type === 'true-false') { %>
+                    <% } else if (question.questionType === 'true-false') { %>
                       <div class="space-y-2">
-                        <div class="flex items-center">
-                          <span class="w-6 h-6 flex items-center justify-center text-xs border rounded mr-2 <%= question.correctAnswer === true ? 'bg-green-100 border-green-300 text-green-800' : 'border-gray-300' %>">
-                            S
-                          </span>
-                          <span class="<%= question.correctAnswer === true ? 'text-green-800 font-medium' : 'text-gray-700' %>">
-                            Sant
-                          </span>
-                        </div>
-                        <div class="flex items-center">
-                          <span class="w-6 h-6 flex items-center justify-center text-xs border rounded mr-2 <%= question.correctAnswer === false ? 'bg-green-100 border-green-300 text-green-800' : 'border-gray-300' %>">
-                            U
-                          </span>
-                          <span class="<%= question.correctAnswer === false ? 'text-green-800 font-medium' : 'text-gray-700' %>">
-                            Usant
-                          </span>
-                        </div>
+                        <% question.options.forEach((option, optIndex) => { %>
+                          <div class="flex items-center">
+                            <span class="w-6 h-6 flex items-center justify-center text-xs border rounded mr-2 <%= option.isCorrect ? 'bg-green-100 border-green-300 text-green-800' : 'border-gray-300' %>">
+                              <%= option.text === 'Sant' ? 'S' : 'U' %>
+                            </span>
+                            <span class="<%= option.isCorrect ? 'text-green-800 font-medium' : 'text-gray-700' %>">
+                              <%= option.text %>
+                            </span>
+                          </div>
+                        <% }) %>
                       </div>
-                    <% } else if (question.type === 'short-answer') { %>
+                    <% } else if (question.questionType === 'short-answer') { %>
                       <div class="bg-green-50 border border-green-200 rounded p-2">
                         <span class="text-sm text-green-800">Korrekt svar: <%= question.correctAnswer %></span>
                       </div>
-                    <% } else if (question.type === 'matching') { %>
+                    <% } else if (question.questionType === 'matching') { %>
                       <div class="grid grid-cols-2 gap-4">
                         <div>
-                          <h4 class="text-sm font-medium text-gray-700 mb-2">Venstre side:</h4>
-                          <% question.leftColumn.forEach((item, idx) => { %>
-                            <div class="text-sm text-gray-600 mb-1"><%= idx + 1 %>. <%= item %></div>
+                          <h4 class="text-sm font-medium text-gray-700 mb-2">Matching par:</h4>
+                          <% question.matchingPairs.forEach((pair, idx) => { %>
+                            <div class="text-sm text-gray-600 mb-1 bg-green-50 border border-green-200 rounded p-2">
+                              <%= idx + 1 %>. <%= pair.left %> → <%= pair.right %>
+                            </div>
                           <% }) %>
                         </div>
-                        <div>
-                          <h4 class="text-sm font-medium text-gray-700 mb-2">Høyre side:</h4>
-                          <% question.rightColumn.forEach((item, idx) => { %>
-                            <div class="text-sm text-gray-600 mb-1"><%= String.fromCharCode(65 + idx) %>. <%= item %></div>
-                          <% }) %>
-                        </div>
-                      </div>
-                      <div class="mt-2 bg-green-50 border border-green-200 rounded p-2">
-                        <span class="text-sm text-green-800">Korrekte par: <%= question.correctPairs.map(pair => `${pair.left + 1}-${String.fromCharCode(65 + pair.right)}`).join(', ') %></span>
                       </div>
                     <% } %>
                   </div>

@@ -118,7 +118,12 @@
                 <h3 class="text-sm font-medium text-gray-700">Gjennomsnittlig Score</h3>
                 <p class="text-2xl font-bold text-purple-600">
                   <% if (profileUser.completedQuizzes && profileUser.completedQuizzes.length > 0) { %>
-                    <%= Math.round(profileUser.completedQuizzes.reduce((sum, quiz) => sum + quiz.score, 0) / profileUser.completedQuizzes.length) %>%
+                    <% const validQuizzes = profileUser.completedQuizzes.filter(result => result.quiz); %>
+                    <% if (validQuizzes.length > 0) { %>
+                      <%= Math.round(validQuizzes.reduce((sum, quiz) => sum + quiz.score, 0) / validQuizzes.length) %>%
+                    <% } else { %>
+                      N/A
+                    <% } %>
                   <% } else { %>
                     N/A
                   <% } %>

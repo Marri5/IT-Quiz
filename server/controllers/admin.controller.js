@@ -2,22 +2,18 @@ const User = require('../models/user.model');
 const Quiz = require('../models/quiz.model');
 const mongoose = require('mongoose');
 
-// Admin dashboard with statistics
 exports.getDashboard = async (req, res, next) => {
   try {
-    // Get statistics
     const totalUsers = await User.countDocuments();
     const totalQuizzes = await Quiz.countDocuments();
     const totalPlays = await Quiz.aggregate([
       { $group: { _id: null, totalPlays: { $sum: '$plays' } } }
     ]);
     
-    // Get recent users
     const recentUsers = await User.find()
       .sort({ createdAt: -1 })
       .limit(5);
     
-    // Get popular quizzes
     const popularQuizzes = await Quiz.find()
       .sort({ plays: -1 })
       .populate('author', 'username')
@@ -40,7 +36,6 @@ exports.getDashboard = async (req, res, next) => {
   }
 };
 
-// Get all users
 exports.getAllUsers = async (req, res, next) => {
   try {
     const users = await User.find()
@@ -57,7 +52,6 @@ exports.getAllUsers = async (req, res, next) => {
   }
 };
 
-// Get user by ID
 exports.getUserById = async (req, res, next) => {
   try {
     const userId = req.params.id;
@@ -69,7 +63,8 @@ exports.getUserById = async (req, res, next) => {
     if (!userWithQuizzes) {
       return res.status(404).render('pages/error', {
         title: 'Bruker ikke funnet',
-        error: { message: 'Brukeren finnes ikke.' }
+        error: { message: 'Brukeren finnes ikke.' },
+        user: req.session.user || null
       });
     }
     
@@ -84,7 +79,6 @@ exports.getUserById = async (req, res, next) => {
   }
 };
 
-// Update user
 exports.updateUser = async (req, res, next) => {
   try {
     const userId = req.params.id;
@@ -103,7 +97,8 @@ exports.updateUser = async (req, res, next) => {
     if (!updatedUser) {
       return res.status(404).render('pages/error', {
         title: 'Bruker ikke funnet',
-        error: { message: 'Brukeren finnes ikke.' }
+        error: { message: 'Brukeren finnes ikke.' },
+        user: req.session.user || null
       });
     }
     
@@ -114,12 +109,10 @@ exports.updateUser = async (req, res, next) => {
   }
 };
 
-// Delete user
 exports.deleteUser = async (req, res, next) => {
   try {
     const userId = req.params.id;
     
-    // Don't allow deleting yourself
     if (userId === req.session.user._id.toString()) {
       return res.status(400).json({
         success: false,
@@ -136,7 +129,6 @@ exports.deleteUser = async (req, res, next) => {
       });
     }
     
-    // Delete all quizzes by this user
     await Quiz.deleteMany({ author: userId });
     
     res.json({ success: true });
@@ -146,7 +138,6 @@ exports.deleteUser = async (req, res, next) => {
   }
 };
 
-// Get all quizzes for admin
 exports.getAllQuizzes = async (req, res, next) => {
   try {
     const quizzes = await Quiz.find()
@@ -164,7 +155,6 @@ exports.getAllQuizzes = async (req, res, next) => {
   }
 };
 
-// Get quiz by ID for admin
 exports.getQuizById = async (req, res, next) => {
   try {
     const quizId = req.params.id;
@@ -175,7 +165,8 @@ exports.getQuizById = async (req, res, next) => {
     if (!quiz) {
       return res.status(404).render('pages/error', {
         title: 'Quiz ikke funnet',
-        error: { message: 'Quizen du leter etter finnes ikke.' }
+        error: { message: 'Quizen du leter etter finnes ikke.' },
+        user: req.session.user || null
       });
     }
     
@@ -190,7 +181,6 @@ exports.getQuizById = async (req, res, next) => {
   }
 };
 
-// Delete quiz (admin version)
 exports.deleteQuiz = async (req, res, next) => {
   try {
     const quizId = req.params.id;
@@ -204,7 +194,6 @@ exports.deleteQuiz = async (req, res, next) => {
       });
     }
     
-    // Remove quiz from user's quizzes
     await User.findByIdAndUpdate(
       deletedQuiz.author,
       { $pull: { quizzes: quizId } }

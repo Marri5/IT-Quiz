@@ -2,23 +2,19 @@ const Quiz = require('../models/quiz.model');
 const User = require('../models/user.model');
 const mongoose = require('mongoose');
 
-// Get all quizzes (public)
 exports.getAllQuizzes = async (req, res, next) => {
   try {
     const { category, difficulty, search } = req.query;
     let query = { isPublic: true };
     
-    // Filter by category
     if (category && category !== 'alle') {
       query.category = category;
     }
     
-    // Filter by difficulty
     if (difficulty && difficulty !== 'alle') {
       query.difficulty = difficulty;
     }
     
-    // Search by title or description
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: 'i' } },
@@ -43,7 +39,6 @@ exports.getAllQuizzes = async (req, res, next) => {
   }
 };
 
-// Get quiz by ID to play
 exports.getQuizById = async (req, res, next) => {
   try {
     const quizId = req.params.id;
@@ -51,14 +46,14 @@ exports.getQuizById = async (req, res, next) => {
     const quiz = await Quiz.findById(quizId)
       .populate('author', 'username');
     
-    if (!quiz) {
+        if (!quiz) {
       return res.status(404).render('pages/error', {
         title: 'Quiz ikke funnet',
-        error: { message: 'Quizen du leter etter finnes ikke.' }
+        error: { message: 'Quizen du leter etter finnes ikke.' },
+        user: req.session.user || null
       });
     }
-    
-    // Don't show correct answers when playing
+
     const playableQuiz = JSON.parse(JSON.stringify(quiz));
     playableQuiz.questions.forEach(question => {
       if (question.questionType === 'multiple-choice' || question.questionType === 'true-false') {
@@ -81,7 +76,6 @@ exports.getQuizById = async (req, res, next) => {
   }
 };
 
-// Submit quiz answers
 exports.submitQuiz = async (req, res, next) => {
   try {
     const quizId = req.params.id;
@@ -93,7 +87,6 @@ exports.submitQuiz = async (req, res, next) => {
       return res.status(404).json({ error: 'Quiz ikke funnet' });
     }
     
-    // Calculate score
     let totalPoints = 0;
     let earnedPoints = 0;
     
@@ -139,10 +132,8 @@ exports.submitQuiz = async (req, res, next) => {
       percentage: Math.round((earnedPoints / totalPoints) * 100)
     };
     
-    // Update quiz statistics
     await quiz.updateStats(score.percentage);
     
-    // Save result for logged in users
     if (req.session.user) {
       const user = await User.findById(req.session.user._id);
       
@@ -154,7 +145,6 @@ exports.submitQuiz = async (req, res, next) => {
       await user.save();
     }
     
-    // Store results temporarily in session for results page
     req.session.quizResults = {
       quizId,
       score,
@@ -168,7 +158,6 @@ exports.submitQuiz = async (req, res, next) => {
   }
 };
 
-// Helper function to get correct answer for display
 function getCorrectAnswer(question) {
   switch (question.questionType) {
     case 'multiple-choice':
@@ -190,12 +179,10 @@ function getCorrectAnswer(question) {
   }
 }
 
-// Show quiz results
 exports.getQuizResults = async (req, res, next) => {
   try {
     const quizId = req.params.id;
     
-    // Get results from session
     if (!req.session.quizResults || req.session.quizResults.quizId !== quizId) {
       return res.redirect(`/quiz/play/${quizId}`);
     }
@@ -205,13 +192,14 @@ exports.getQuizResults = async (req, res, next) => {
     const quiz = await Quiz.findById(quizId)
       .populate('author', 'username');
     
-    if (!quiz) {
+        if (!quiz) {
       return res.status(404).render('pages/error', {
         title: 'Quiz ikke funnet',
-        error: { message: 'Quizen du leter etter finnes ikke.' }
+        error: { message: 'Quizen du leter etter finnes ikke.' },
+        user: req.session.user || null
       });
     }
-    
+
     res.render('pages/quiz-results', {
       title: `IT-Quiz - Resultater: ${quiz.title}`,
       quiz,
@@ -225,14 +213,11 @@ exports.getQuizResults = async (req, res, next) => {
   }
 };
 
-// Create new quiz
 exports.createQuiz = async (req, res, next) => {
   try {
     const { title, description, category, difficulty, timeLimit, isPublic, questions } = req.body;
     
-    // Process questions data
     const processedQuestions = JSON.parse(questions).map(q => {
-      // Process based on question type
       switch (q.questionType) {
         case 'multiple-choice':
         case 'true-false':
@@ -265,7 +250,6 @@ exports.createQuiz = async (req, res, next) => {
       };
     });
     
-    // Create new quiz
     const quiz = new Quiz({
       title,
       description,
@@ -280,7 +264,6 @@ exports.createQuiz = async (req, res, next) => {
     
     await quiz.save();
     
-    // Add quiz to user's quizzes
     await User.findByIdAndUpdate(
       req.session.user._id,
       { $push: { quizzes: quiz._id } }
@@ -293,7 +276,6 @@ exports.createQuiz = async (req, res, next) => {
   }
 };
 
-// Get quiz to edit
 exports.getQuizToEdit = async (req, res, next) => {
   try {
     const quizId = req.params.id;
@@ -307,7 +289,8 @@ exports.getQuizToEdit = async (req, res, next) => {
     if (!quiz) {
       return res.status(404).render('pages/error', {
         title: 'Quiz ikke funnet',
-        error: { message: 'Quizen du leter etter finnes ikke eller du har ikke tilgang til å redigere den.' }
+        error: { message: 'Quizen du leter etter finnes ikke eller du har ikke tilgang til å redigere den.' },
+        user: req.session.user || null
       });
     }
     
@@ -322,7 +305,6 @@ exports.getQuizToEdit = async (req, res, next) => {
   }
 };
 
-// Update quiz
 exports.updateQuiz = async (req, res, next) => {
   try {
     const quizId = req.params.id;
@@ -330,9 +312,7 @@ exports.updateQuiz = async (req, res, next) => {
     
     const { title, description, category, difficulty, timeLimit, isPublic, questions } = req.body;
     
-    // Process questions data (similar to createQuiz)
     const processedQuestions = JSON.parse(questions).map(q => {
-      // Process based on question type (similar to createQuiz)
       switch (q.questionType) {
         case 'multiple-choice':
         case 'true-false':
@@ -365,7 +345,6 @@ exports.updateQuiz = async (req, res, next) => {
       };
     });
     
-    // Update quiz
     const updatedQuiz = await Quiz.findOneAndUpdate(
       { _id: quizId, author: userId },
       {
@@ -384,7 +363,8 @@ exports.updateQuiz = async (req, res, next) => {
     if (!updatedQuiz) {
       return res.status(404).render('pages/error', {
         title: 'Quiz ikke funnet',
-        error: { message: 'Quizen du leter etter finnes ikke eller du har ikke tilgang til å redigere den.' }
+        error: { message: 'Quizen du leter etter finnes ikke eller du har ikke tilgang til å redigere den.' },
+        user: req.session.user || null
       });
     }
     
@@ -395,14 +375,12 @@ exports.updateQuiz = async (req, res, next) => {
   }
 };
 
-// Delete quiz
 exports.deleteQuiz = async (req, res, next) => {
   try {
     const quizId = req.params.id;
     const userId = req.session.user._id;
     const isAdmin = req.session.user.role === 'admin';
     
-    // Set query based on user role
     const query = isAdmin
       ? { _id: quizId }
       : { _id: quizId, author: userId };
@@ -416,7 +394,6 @@ exports.deleteQuiz = async (req, res, next) => {
       });
     }
     
-    // Remove quiz from user's quizzes
     await User.findByIdAndUpdate(
       deletedQuiz.author,
       { $pull: { quizzes: quizId } }
@@ -429,7 +406,6 @@ exports.deleteQuiz = async (req, res, next) => {
   }
 };
 
-// Get user's quizzes
 exports.getUserQuizzes = async (req, res, next) => {
   try {
     const userId = req.session.user._id;
@@ -439,7 +415,8 @@ exports.getUserQuizzes = async (req, res, next) => {
     if (!user) {
       return res.status(404).render('pages/error', {
         title: 'Bruker ikke funnet',
-        error: { message: 'Brukeren finnes ikke.' }
+        error: { message: 'Brukeren finnes ikke.' },
+        user: req.session.user || null
       });
     }
     

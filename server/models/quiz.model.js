@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-// Schema for a single question
 const questionSchema = new mongoose.Schema({
   questionText: {
     type: String,
@@ -16,12 +15,10 @@ const questionSchema = new mongoose.Schema({
     text: String,
     isCorrect: Boolean
   }],
-  // For short-answer questions
   correctAnswer: {
     type: String,
     default: ''
   },
-  // For matching questions
   matchingPairs: [{
     left: String,
     right: String
@@ -36,7 +33,6 @@ const questionSchema = new mongoose.Schema({
   }
 });
 
-// Main Quiz schema
 const quizSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -59,7 +55,7 @@ const quizSchema = new mongoose.Schema({
   },
   questions: [questionSchema],
   timeLimit: {
-    type: Number, // In minutes
+    type: Number,
     default: 10
   },
   isPublic: {
@@ -86,12 +82,10 @@ const quizSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Virtual for calculating total points
 quizSchema.virtual('totalPoints').get(function() {
   return this.questions.reduce((total, question) => total + question.points, 0);
 });
 
-// Method to update average score when a quiz is completed
 quizSchema.methods.updateStats = function(score) {
   const currentTotal = this.plays * this.averageScore;
   this.plays += 1;

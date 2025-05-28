@@ -4,7 +4,6 @@
     <p class="text-gray-600">Finn og ta quizzer om ulike IT-temaer.</p>
   </div>
   
-  <!-- Filters -->
   <div class="bg-white p-6 rounded-lg shadow-md mb-8">
     <form action="/quiz" method="GET" class="space-y-4 md:space-y-0 md:flex md:items-end md:gap-4">
       <div class="flex-1">
@@ -28,7 +27,7 @@
         >
           <option value="alle" <%= !filter || !filter.category || filter.category === 'alle' ? 'selected' : '' %>>Alle kategorier</option>
           <option value="programutvikling" <%= filter && filter.category === 'programutvikling' ? 'selected' : '' %>>Programutvikling</option>
-          <option value="drift" <%= filter && filter.category === 'drift' ? 'selected' : '' %>>Drift og infrastruktur</option>
+                          <option value="drift" <%= filter && filter.category === 'drift' ? 'selected' : '' %>>Drift</option>
           <option value="nettverk" <%= filter && filter.category === 'nettverk' ? 'selected' : '' %>>Nettverk og sikkerhet</option>
           <option value="database" <%= filter && filter.category === 'database' ? 'selected' : '' %>>Database</option>
           <option value="annet" <%= filter && filter.category === 'annet' ? 'selected' : '' %>>Annet</option>
@@ -63,7 +62,6 @@
     </form>
   </div>
   
-  <!-- Quiz list -->
   <div class="space-y-6">
     <% if (quizzes && quizzes.length > 0) { %>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

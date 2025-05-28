@@ -3,10 +3,8 @@ const mongoose = require('mongoose');
 const User = require('../models/user.model');
 const Quiz = require('../models/quiz.model');
 
-// Sample quizzes data
 const quizzes = require('./quizzes');
 
-// Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://10.12.3.98:27017/it-quiz')
   .then(() => console.log('MongoDB connected for seeding'))
   .catch((err) => {
@@ -14,16 +12,13 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://10.12.3.98:27017/it-quiz'
     process.exit(1);
   });
 
-// Seed the database
 const seedDatabase = async () => {
   try {
-    // Clear existing data
     await Quiz.deleteMany({});
     await User.deleteMany({});
     
     console.log('Database cleared');
     
-    // Create admin user
     const adminUser = new User({
       username: 'admin',
       email: 'admin@it-utdanning.no',
@@ -34,7 +29,6 @@ const seedDatabase = async () => {
     await adminUser.save();
     console.log('Admin user created');
     
-    // Create regular user
     const regularUser = new User({
       username: 'bruker',
       email: 'bruker@example.com',
@@ -45,7 +39,6 @@ const seedDatabase = async () => {
     await regularUser.save();
     console.log('Regular user created');
     
-    // Create quizzes
     for (const quizData of quizzes) {
       const quiz = new Quiz({
         ...quizData,
@@ -54,7 +47,6 @@ const seedDatabase = async () => {
       
       await quiz.save();
       
-      // Add quiz to user's quizzes
       if (quizData.isAdminQuiz) {
         await User.findByIdAndUpdate(
           adminUser._id,

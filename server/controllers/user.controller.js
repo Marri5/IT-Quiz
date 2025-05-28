@@ -1,6 +1,5 @@
 const User = require('../models/user.model');
 
-// Get user profile with populated data
 exports.getProfile = async (req, res, next) => {
   try {
     const userId = req.session.user._id;
@@ -12,7 +11,8 @@ exports.getProfile = async (req, res, next) => {
     if (!user) {
       return res.status(404).render('pages/error', {
         title: 'Bruker ikke funnet',
-        error: { message: 'Brukeren finnes ikke.' }
+        error: { message: 'Brukeren finnes ikke.' },
+        user: req.session.user || null
       });
     }
     

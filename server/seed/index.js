@@ -64,7 +64,7 @@ const seedDatabase = async () => {
     
     console.log('Database seeded successfully!');
     console.log('\nUser credentials:');
-    console.log('Admin - Email: admin@it-utdanning.no, Password: Admin123');
+    console.log('Admin - Email: admin@it-quiz.no, Password: Admin123');
     console.log('User - Email: bruker@example.com, Password: Bruker123');
     
     process.exit(0);
